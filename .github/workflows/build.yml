@@ -44,4 +44,5 @@ jobs:
 
       - name: Deploy to ssh server
         run: |
-          scp -r -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no build/* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/web/${{ steps.generate_date.outputs.date }}
+          ssh -T -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.REMOTE_HOST }} -p 22 "mkdir ~/web/release_${{ steps.generate_date.outputs.date }}"
+          scp -r -i ~/.ssh/id_rsa ./build/* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:~/web/release_${{ steps.generate_date.outputs.date }}
