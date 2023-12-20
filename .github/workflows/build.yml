@@ -1,42 +1,55 @@
+# Construit l'application et la déploie sur un serveur distant
 name: Build and Deploy
 
+# Déclenche le workflow lorsqu'il y a un push sur la branche master
 on:
   push:
     branches:
       - master
 
+# Jobs à exécuter dans le workflow
 jobs:
+  # Job pour la construction de l'application
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # Étape pour récupérer le code source du référentiel
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Étape pour configurer Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
 
+      # Étape pour installer les dépendances du projet avec npm
       - name: Install dependencies
         run: npm install
 
+      # Étape pour construire la version de production
       - name: Build production version
         run: npm run build
 
+      # Étape pour archiver l'artifact de construction pour téléchargement ultérieur (lors du déploiement)
       - name: Archive Build Artifact
         uses: actions/upload-artifact@v2
         with:
           name: build-artifact
           path: ./build
 
+  # Job pour le déploiement de l'application
   deploy:
     runs-on: ubuntu-latest
+    # Le job déploiement dépend du job "build" pour s'exécuter en cas de succès
     needs: build
     steps:
+      # Étape pour récupérer à nouveau le code source du référentiel
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      # Étape pour configurer la clé SSH
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -44,16 +57,19 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
+      # Étape pour générer la date de sortie du build
       - name: Generate release date
         id: generate_date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d_%H-%M-%S')"
 
+      # Étape pour télécharger l'artifact de construction
       - name: Download Build Artifact
         uses: actions/download-artifact@v2
         with:
           name: build-artifact
           path: ./build
 
+      # Étape pour déployer l'application via SCP avec la clé privée RSA générée
       - name: Deploy to ssh server
         run: |
           ssh -T -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} -p 22 "mkdir -p ~/web/release_${{ steps.generate_date.outputs.date }}"

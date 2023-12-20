@@ -17,3 +17,11 @@ La page se rechargera à chaque modification dans le code.
 ### `npm run build`
 
 Construit l'application pour la production dans le dossier `build` .  
+
+## Docker
+
+L'application peut être éxécutée dans un conteneur Docker avec la commande suivante :
+
+``` bash
+ docker-compose up --build
+```
